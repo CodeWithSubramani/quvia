@@ -51,7 +51,7 @@ For **jitter threshold = 100**:
 | 0 (150)     | 150 + 100 = 250     | Index 2 (latency = 250)         | 30 + 50 + 40 = 120    |
 | 1 (200)     | 200 + 100 = 300     | Index 3 (latency = 300)         | 50 + 40 + 20 = 110    |
 | 2 (250)     | 250 + 100 = 350     | Index 3 (latency = 300)         | 40 + 20 = 60          |
-| 3 (300)     | 300 + 100 = 400     | Index 3                        | 20                    |
+| 3 (300)     | 300 + 100 = 400     | Index 3                         | 20                    |
 
 **Maximum Bandwidth = 120** (from subset [Link 0, Link 1, Link 2]).
 
