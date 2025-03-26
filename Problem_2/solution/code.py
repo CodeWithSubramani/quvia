@@ -1,4 +1,5 @@
 import bisect
+import random
 
 
 def calculate_max_bandwidth(links, jitter_thresholds):
@@ -28,19 +29,42 @@ def calculate_max_bandwidth(links, jitter_thresholds):
     return results
 
 
-# Example usage with sample data
+# Example usage with detailed printing
 if __name__ == "__main__":
-    import random
-
-    # Generate 20 random links (latency, bandwidth)
-    random.seed(42)  # For reproducibility
+    # Generate test data
+    random.seed(42)  # Fixed seed for reproducibility
     links = [(random.randint(50, 500), random.randint(10, 100)) for _ in range(20)]
-    # Generate 20 jitter thresholds (e.g., 50, 100, 150, ..., 500)
     jitter_thresholds = [50 * (i + 1) for i in range(20)]
 
+    # Print input details
+    print("=" * 50 + "\nINPUT DETAILS\n" + "=" * 50)
+    print("\n=== LINKS ===")
+    for idx, (latency, bw) in enumerate(links):
+        print(f"Link {idx + 1:2}: Latency = {latency:4}ms, Bandwidth = {bw:3} Mbps")
+
+    print("\n=== TRAFFIC TYPES ===")
+    for idx, threshold in enumerate(jitter_thresholds):
+        print(f"Traffic Type {idx + 1:2}: Max Jitter = {threshold:4}ms")
+
     # Calculate results
+    print("\n" + "=" * 50 + "\nPROCESSING\n" + "=" * 50)
+    print("1. Sorting links by latency...")
+    sorted_links = sorted(links, key=lambda x: x[0])
+    print("2. Calculating prefix sums for bandwidth...")
+
+    # Perform calculation
+    print("3. Finding maximum bandwidth for each traffic type:")
     max_bandwidths = calculate_max_bandwidth(links, jitter_thresholds)
 
-    # Print results
-    for idx, bw in enumerate(max_bandwidths):
-        print(f"Traffic Type {idx + 1} (Jitter ≤ {jitter_thresholds[idx]}): Max Bandwidth = {bw}")
+    # Print final results
+    print("\n" + "=" * 50 + "\nRESULTS\n" + "=" * 50)
+    for idx, (threshold, bw) in enumerate(zip(jitter_thresholds, max_bandwidths)):
+        print(f"Traffic Type {idx + 1:2} (Jitter ≤ {threshold:4}ms): " +
+              f"Max Bandwidth = {bw:4} Mbps")
+
+    # Print explanation
+    print("\n" + "=" * 50 + "\nINTERPRETATION\n" + "=" * 50)
+    print("For each traffic type (with different jitter tolerance):")
+    print("- We find the largest group of consecutive low-latency links")
+    print("- Where (max latency - min latency) ≤ the jitter limit")
+    print("- Sum their bandwidths to get the maximum possible bandwidth")
