@@ -3,9 +3,10 @@ import math
 
 
 class PoisonBottleDetector:
-    def __init__(self, total_bottles, poison_count):
+    def __init__(self, total_bottles, poison_count, inputted_poisonous_bottles):
         self.total_bottles = total_bottles
         self.poison_count = poison_count
+        self.inputted_poisonous_bottles = inputted_poisonous_bottles
         self.poisonous_bottles = []
         self.total_combinations = self.calculate_combinations()
         self.total_prisoners = self.calculate_combination_prisoners()
@@ -23,19 +24,18 @@ class PoisonBottleDetector:
         self.poisonous_bottles = poison_list if poison_list is not None else []
         return self.poisonous_bottles
 
-    def detect_poison_bottles(self, poison_list=None):
-        """Detect poisonous bottles using comprehensive testing strategy"""
-        # Mark poisonous bottles
-        original_bottles = self.mark_poisonous_bottles(poison_list)
-
+    def detect_poison_bottles(self):
+        """Detect poisonous bottles"""
         # Generate all possible combinations
         all_combinations = list(itertools.combinations(range(self.total_bottles), self.poison_count))
 
         # Identify the index of the combination containing the poisonous bottles
         poisonous_combination_index = next(
-            (index for index, combination in enumerate(all_combinations) if set(combination) == set(original_bottles)),
+            (index for index, combination in enumerate(all_combinations) \
+             if set(combination) == set(
+                self.inputted_poisonous_bottles)),
             None
-        )
+        )  ### Dummy method to mimic the actual detection process
 
         # Use binary representation of the combination index
         if poisonous_combination_index is not None:
@@ -45,7 +45,7 @@ class PoisonBottleDetector:
             identified_bottles = []
 
         return {
-            'original_poisonous_bottles': original_bottles,
+            'original_poisonous_bottles': self.inputted_poisonous_bottles,
             'total_combinations': self.total_combinations,
             'identified_poisonous_bottles': identified_bottles,
             'total_prisoners_needed': self.total_prisoners
@@ -84,10 +84,10 @@ def main():
         print(f"\nScenario: {total_bottles} bottles, {poison_count} poisonous, specific bottles {poison_list}")
 
         # Create detector
-        detector = PoisonBottleDetector(total_bottles, poison_count)
+        detector = PoisonBottleDetector(total_bottles, poison_count, inputted_poisonous_bottles=poison_list)
 
         # Run detection
-        result = detector.detect_poison_bottles(poison_list)
+        result = detector.detect_poison_bottles()
 
         print("Original Poisonous Bottles:", sorted(result['original_poisonous_bottles']))
         print("Identified Poisonous Bottles:", sorted(result['identified_poisonous_bottles']))

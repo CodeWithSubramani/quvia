@@ -1,26 +1,16 @@
 # Poison Bottle Detection Algorithm: Brute Force method
 
----
-## 🎯 The Challenge
-
-- You have `N` total bottles.
-- `K` of these bottles are poisoned.
-- Goal: Find the poisoned bottles using the **minimum** number of prisoners.
----
 
 ## 🔍 Thinking out loud: Single Poisoned Bottle
 
 ### 🧩 The Binary Encoding Magic
-
 **Scenario**: 8 Bottles, 1 Poisoned Bottle
 
 #### Intuition
-
 Think of binary numbers like secret labels for the bottles. Each bottle gets a unique binary number, and each prisoner
 drinks from bottles where their respective bit is `1`.
 
 #### **Example: Assigning Binary Numbers to Bottles**
-
 ```
 Bottle 0: 000 (0 in decimal)
 Bottle 1: 001 (1 in decimal)
@@ -78,6 +68,7 @@ Since, there are only 2 states (alive or dead), the number of prisoners required
 => n >= 6
 This means we need **at least** `6` prisoners.
 
+Formula is ~= log₂(C(N, K))
 #### 👥 Prisoner Strategy
 
 Each prisoner drinks from bottles according to a bit in a binary encoding of the 56 possible combinations
