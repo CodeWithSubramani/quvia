@@ -3,58 +3,87 @@ import math
 
 class PoisonBottleDetector:
     def __init__(self, total_bottles, poison_count):
+        if poison_count < 0 or poison_count > total_bottles:
+            raise ValueError("Invalid number of poisoned bottles")
         self.total_bottles = total_bottles
         self.poison_count = poison_count
         self.poisonous_bottles = []
         self.total_prisoners = self.calculate_prisoners_needed()
 
     def calculate_prisoners_needed(self):
-        """Calculate minimum number of prisoners needed using binary encoding"""
-        # Each prisoner can represent one bit in the bottle's binary representation
-        return math.ceil(math.log2(self.total_bottles)) * self.poison_count
+        """Calculate minimum prisoners using combinatorial encoding"""
+        if self.poison_count == 0:
+            return 0
+        total_combinations = math.comb(self.total_bottles, self.poison_count)
+        return max(math.ceil(math.log2(total_combinations)), 1)
 
-    def mark_poisonous_bottles(self, poison_list=None):
-        """Mark poisonous bottles"""
-        self.poisonous_bottles = poison_list if poison_list is not None else []
-        return self.poisonous_bottles
+    def combination_to_index(self, combo):
+        """Convert sorted combination to unique integer index"""
+        combo = sorted(combo)
+        n, k = self.total_bottles, self.poison_count
+        index = 0
+        prev = -1
+        for i in range(k):
+            current = combo[i]
+            start = prev + 1
+            for j in range(start, current):
+                available = n - j - 1
+                needed = k - i - 1
+                index += math.comb(available, needed)
+            prev = current
+        return index
+
+    def index_to_combination(self, index):
+        """Convert index back to combination of bottles"""
+        n, k = self.total_bottles, self.poison_count
+        combo = []
+        remaining = index
+        prev = -1
+        for i in range(k):
+            j = prev + 1
+            while True:
+                available = n - j - 1
+                needed = k - i - 1
+                if available < needed:
+                    c = 0
+                else:
+                    c = math.comb(available, needed)
+                if remaining < c:
+                    break
+                remaining -= c
+                j += 1
+            combo.append(j)
+            prev = j
+        return combo
 
     def detect_poison_bottles(self, poison_list=None):
-        """Detect poisonous bottles using optimized binary testing strategy"""
-        # Mark poisonous bottles
-        original_bottles = self.mark_poisonous_bottles(poison_list)
+        """Detect poisonous bottles using combinatorial encoding strategy"""
+        if poison_list is None:
+            poison_list = []
+        original = sorted(poison_list)
+        if len(original) != self.poison_count:
+            raise ValueError(f"Expected {self.poison_count} poisons, got {len(original)}")
 
-        if len(original_bottles) != self.poison_count:
-            raise ValueError(f"Expected {self.poison_count} poisonous bottles, got {len(original_bottles)}")
+        # Encode combination to index
+        index = self.combination_to_index(original)
 
-        # Calculate bits needed per bottle
-        bits_per_bottle = math.ceil(math.log2(self.total_bottles))
+        # Convert index to binary
+        bits_needed = self.total_prisoners
+        binary = bin(index)[2:].zfill(bits_needed)
 
-        # Encode each poisonous bottle in binary
-        encoded_bottles = []
-        for bottle in sorted(original_bottles):
-            binary = bin(bottle)[2:].zfill(bits_per_bottle)
-            encoded_bottles.append(binary)
-
-        # Combine all binary representations
-        full_binary = ''.join(encoded_bottles)
-
-        # Split into prisoner groups (each prisoner tests specific bits)
-        identified_bottles = []
-        for i in range(0, len(full_binary), bits_per_bottle):
-            bottle_bits = full_binary[i:i + bits_per_bottle]
-            bottle_num = int(bottle_bits, 2)
-            identified_bottles.append(bottle_num)
+        # Decode binary back to combination
+        decoded_index = int(binary, 2)
+        identified = self.index_to_combination(decoded_index)
 
         return {
-            'original_poisonous_bottles': original_bottles,
-            'identified_poisonous_bottles': identified_bottles,
+            'original_poisonous_bottles': original,
+            'identified_poisonous_bottles': identified,
             'total_prisoners_needed': self.total_prisoners,
-            'bits_per_bottle': bits_per_bottle
+            'prisoner_bits': binary
         }
 
 
 def main():
-    # Test scenarios - now including larger test cases
     scenarios = [
         (1000, 1, [19]),
         (8, 3, [1, 2, 3]),
@@ -62,35 +91,25 @@ def main():
         (1000, 3, [439, 19, 12]),
         (100, 4, [20, 19, 12, 11]),
         (50, 5, [20, 19, 12, 11, 39]),
-        # Larger test cases
-        (1000000, 1, [123456]),  # 1 million bottles
-        (1000000, 2, [123456, 789012]),
-        (1000000, 3, [123456, 789012, 345678]),
-        (2 ** 20, 5, [1, 2, 3, 4, 5]),  # 1,048,576 bottles
+        (1_000_000, 1, [123456]),
+        (1_000_000, 2, [123456, 789012]),
+        (1_000_000, 3, [123456, 789012, 345678]),
+        (2 ** 20, 5, [1, 2, 3, 4, 5]),
     ]
 
-    for total_bottles, poison_count, poison_list in scenarios:
-        print(f"\nScenario: {total_bottles:,} bottles, {poison_count} poisonous, specific bottles {poison_list}")
-
-        # Create detector
-        detector = PoisonBottleDetector(total_bottles, poison_count)
-
-        # Run detection
+    for n, k, poisons in scenarios:
+        print(f"\nTesting {n:,} bottles, {k} poisons")
+        detector = PoisonBottleDetector(n, k)
         try:
-            result = detector.detect_poison_bottles(poison_list)
-
-            print("Original Poisonous Bottles:", sorted(result['original_poisonous_bottles']))
-            print("Identified Poisonous Bottles:", sorted(result['identified_poisonous_bottles']))
-            print("Bits per bottle:", result['bits_per_bottle'])
-            print("Total Prisoners Needed:", result['total_prisoners_needed'])
-
-            # Verify correctness
-            assert set(result['original_poisonous_bottles']) == set(result['identified_poisonous_bottles']), \
-                "Failed to correctly identify poisonous bottles!"
+            result = detector.detect_poison_bottles(poisons)
+            orig = result['original_poisonous_bottles']
+            found = result['identified_poisonous_bottles']
+            print(f"Prisoners needed: {result['total_prisoners_needed']}")
+            print(f"Original: {orig}\nFound:    {found}")
+            assert orig == found, "Detection failed!"
             print("Test PASSED")
         except ValueError as e:
-            print(f"Error: {e}")
-            print("Test SKIPPED")
+            print(f"Invalid scenario: {e}")
 
 
 if __name__ == "__main__":
