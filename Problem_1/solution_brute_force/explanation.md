@@ -1,22 +1,14 @@
-# Poison Bottle Detection Algorithm: A Friendly Guide
-
-## 🤔 What's This Problem All About?
-
-Imagine you have a collection of bottles, and some of them contain poison. Your job is to figure out which ones are
-poisoned while using the least number of test subjects (prisoners). Sounds tricky, right? Let's break it down step by
-step!
+# Poison Bottle Detection Algorithm: Brute Force method
 
 ---
-
 ## 🎯 The Challenge
 
 - You have `N` total bottles.
 - `K` of these bottles are poisoned.
 - Goal: Find the poisoned bottles using the **minimum** number of prisoners.
-
 ---
 
-## 🔍 Approach 1: Finding a Single Poisoned Bottle
+## 🔍 Thinking out loud: Single Poisoned Bottle
 
 ### 🧩 The Binary Encoding Magic
 
@@ -62,13 +54,14 @@ If **prisoner 1 and prisoner 3 die, but prisoner 2 survives**, the corresponding
 is poisoned.
 
 
-## 🔬 Approach 2: Multiple Poisoned Bottles
+## 🔬 Actual Problem: Multiple Poisoned Bottles
 
 ### 📊 Counting Combinations
 
-**Scenario**: 8 Bottles, 3 Poisoned Bottles
+**Scenario based illustration**: 8 Bottles, 3 Poisoned Bottles
 
-Instead of binary encoding, we now count **all possible combinations** of choosing 3 bottles from 8.
+Instead of binary encoding, we now count **all possible combinations** of choosing 3 bottles from 8 as more than 1 
+bottle can be poisoned.
 
 #### How Many Combinations Exist?
 
@@ -76,13 +69,20 @@ Instead of binary encoding, we now count **all possible combinations** of choosi
 
   **C(8,3) = 8! / (3! * (8-3)!) = (8 × 7 × 6) / (3 × 2 × 1) = 56**
 
-This means we need **at least** `⌈log₂(56)⌉ = 6` prisoners.
+#### Number of Prisoners Required
+Let's take n as the number of prisoners required
+
+Since, there are only 2 states (alive or dead), the number of prisoners required is the smallest integer n such that
+2^n ≥ 56
+=> n ≥ log₂(56)
+=> n >= 6
+This means we need **at least** `6` prisoners.
 
 #### 👥 Prisoner Strategy
 
-Each prisoner drinks from bottles according to a bit in a binary encoding of the 56 possible combinations.
+Each prisoner drinks from bottles according to a bit in a binary encoding of the 56 possible combinations
 
-#### **Which Prisoners Drank from Which Bottles?**
+#### **Example table of which Prisoners Drank from Which Bottles?**
 
 | ID  | Bottles Comb | Binary ID | P1 (LSB) | P2  | P3  | P4  | P5  | P6 (MSB) |
 |-----|--------------|-----------|----------|-----|-----|-----|-----|----------|
@@ -103,7 +103,7 @@ Each prisoner drinks from bottles according to a bit in a binary encoding of the
 
 ### Step 3: Simulate the Test
 
-**Poisoned bottles:** 4, 5, 7 (part of combo {4,5,7}).
+Let's say **Poisoned bottles:** 4, 5, 7 (part of combo {4,5,7}).
 
 #### Prisoner actions:
 
@@ -116,7 +116,6 @@ Each prisoner drinks from bottles according to a bit in a binary encoding of the
 **Result:** Only P6, P5, P3 & P2 die.
 
 ---
-
 ### Step 4: Decode the Result
 
 - **Dead prisoners = 1 bits** → P6, P5, P3, P2.
@@ -129,6 +128,38 @@ Each prisoner drinks from bottles according to a bit in a binary encoding of the
 
 ### Why This Works
 
-#### Unique Signature:
+#### Unique Signature is applied to each combination, which can be revered back to the original combination:
+- In this case, No other combo has the ID **110110**.
+--- 
+ ### Problems with this approach:
+- This will not scale with the number of bottles and poisoned bottles.
+- The number combinations will explode to a very high value.
 
-- No other combo has the ID **110110**.
+--- 
+### Time Complexity of the problem is:
+
+***O(log(C(N,K))*C(N,K))***
+C(N,K) = Combinations of K bottles from N (N choose K)
+K = Number of poisoned bottles
+
+***Breakdown:***
+
+1. Generating all combinations: O(C(N,K))
+   2. Creating binary mappings for each combination: O(log(C(N,K)))
+      - Reason: TC is O(log(N)) for binary encoding of N
+       ```shell
+       Example:
+       N = 8
+       To get binary of 8 we divide it by 3 times
+       8/2 = 4, remainder = 0
+       4/2 = 2, remainder = 0
+       2/2 = 1, remainder = 0
+       As 1 is less than 2, 1 is considered as the remainder:
+       This can be mathematically represented as:
+       log₂(8) = 3
+       ```
+3. Lookup during decoding: O(1) with perfect hashing
+
+--- Space Complexity of the problem is:
+***O(C(N,K))***
+As this will store all the combinations of K bottles from N bottles in a hashMap.
