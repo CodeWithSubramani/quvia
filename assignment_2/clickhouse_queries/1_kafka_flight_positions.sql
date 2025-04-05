@@ -1,17 +1,18 @@
+-- Kafka engine table
 CREATE TABLE flight_data.kafka_flight_positions
 (
     flight_id String,
+    hex Nullable(String),
     callsign Nullable(String),
     latitude Float64,
     longitude Float64,
+    track Float32,
     altitude Float32,
-    speed Float32,
-    heading Float32,
-    vertical_rate Nullable(Float32),
+    gspeed Float32,
+    vspeed Float32,
+    squawk Nullable(String),
     timestamp DateTime64(3),
-    origin Nullable(String),
-    destination Nullable(String),
-    squawk Nullable(String)
+    source Nullable(String)
 )
 ENGINE = Kafka
 SETTINGS
@@ -22,3 +23,4 @@ SETTINGS
     format_avro_schema_registry_url = 'http://schema-registry:8081',
     kafka_num_consumers = 3,
     kafka_skip_broken_messages = 100;
+
