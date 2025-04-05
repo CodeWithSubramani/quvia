@@ -103,23 +103,34 @@ class Flightradar24API:
 
 
 def delivery_report(err, msg):
-    """Callback for message delivery reports"""
+    """Enhanced callback with more debugging info"""
     if err is not None:
-        print(f"Message delivery failed: {err}")
+        print(f"❌ Delivery failed: {err}")
+        print(f"Error details: {err.str()}")
+        print(f"Error code: {err.code()}")
+        print(f"Error fatal: {err.fatal()}")
     else:
-        print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+        print(f"✅ Delivered to {msg.topic()} [{msg.partition()}]")
+        print(f"Offset: {msg.offset()}")
+        print(f"Timestamp: {msg.timestamp()}")
+
+    print('--- End Report ---\n')
 
 
 def produce_flight_data(flight_data):
     """Produce flight data to Kafka"""
     try:
+        print('attempting serialized data')
         serialized_data = avro_serializer(flight_data, SerializationContext(TOPIC_NAME, MessageField.VALUE))
+        print('printing serialized data')
+        print(serialized_data)
         producer.produce(
             topic=TOPIC_NAME,
             value=serialized_data,
             callback=delivery_report
         )
         producer.poll(0)
+        print("produced messages")
     except Exception as e:
         print(f"Error producing message: {e}")
 

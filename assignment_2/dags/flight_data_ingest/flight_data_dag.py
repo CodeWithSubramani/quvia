@@ -1,9 +1,8 @@
-import time
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from flight_data_ingest.producer import Flightradar24API, transform_flight_data, produce_flight_data, producer
+from flight_data_ingest.producer import main
 
 default_args = {
     'owner': 'airflow',
@@ -16,21 +15,7 @@ default_args = {
 
 
 def run_producer():
-    fr24 = Flightradar24API()
-    while True:  # Continuous loop for perpetual operation
-        try:
-            api_data = fr24.fetch_flight_data()
-            if api_data:
-                flights = transform_flight_data(api_data)
-                for flight in flights:
-                    produce_flight_data(flight)
-                producer.flush()
-            time.sleep(10)  # Short delay between fetches to avoid rate limiting
-        except Exception as e:
-            # Log error and continue unless it's a critical exception
-            print(f"Error occurred: {str(e)}")
-            time.sleep(30)  # Longer delay after error
-            continue
+    main()
 
 
 with DAG(

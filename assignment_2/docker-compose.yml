@@ -2,6 +2,43 @@ version: '3.8'
 
 services:
   # Zookeeper (required for Kafka)
+
+  # Schema Registry
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.3.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+    env_file:
+      - .env
+
+    networks:
+      - flight-network
+
+  # REST Proxy (optional)
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:7.3.0
+    hostname: rest-proxy
+    container_name: rest-proxy
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8082:8082"
+    env_file:
+      - .env
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+
+    networks:
+      - flight-network
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     hostname: zookeeper
@@ -11,6 +48,7 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+
     networks:
       - flight-network
 
@@ -29,31 +67,29 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
     networks:
       - flight-network
 
-  # ClickHouse Server
-  clickhouse-server:
-    image: clickhouse/clickhouse-server:23.3
-    environment:
-      KAFKA_BROKERS: "kafka:9092"
-    hostname: clickhouse-server
-    container_name: clickhouse-server
+  # Kafka UI (optional, for monitoring)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
     ports:
-      - "8123:8123" # HTTP interface
-      - "9000:9000" # Native protocol
-      - "9009:9009" # Interserver communication
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    volumes:
-      - clickhouse_data:/var/lib/clickhouse
-      - ./clickhouse-config.xml:/etc/clickhouse-server/config.d/custom.xml
+      - "8084:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT: zookeeper:2181
+
     networks:
       - flight-network
 
@@ -67,6 +103,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
+
     networks:
       - flight-network
     healthcheck:
@@ -96,6 +133,7 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./requirements.txt:/requirements.txt
+
     networks:
       - flight-network
 
@@ -106,8 +144,11 @@ services:
     depends_on:
       - postgres
       - airflow-init
+      - kafka
     env_file:
       - .env
+    environment:
+      KAFKA_BROKER_URL: "kafka:9092"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
@@ -116,6 +157,7 @@ services:
     ports:
       - "${AIRFLOW_WEBSERVER_PORT}:8080"
     user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
+
     command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow webserver"
     networks:
       - flight-network
@@ -127,66 +169,44 @@ services:
     depends_on:
       - airflow-webserver
       - airflow-init
+      - kafka
     env_file:
       - .env
+    environment:
+      KAFKA_BROKER_URL: "kafka:9092"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./requirements.txt:/requirements.txt
     user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
+
     command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow scheduler"
     networks:
       - flight-network
 
-  # Kafka UI (optional, for monitoring)
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    depends_on:
-      - kafka
-    ports:
-      - "8084:8080"
+  # ClickHouse Server
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:23.3
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER_CONNECT: zookeeper:2181
-    networks:
-      - flight-network
-  # Schema Registry
-  schema-registry:
-    image: confluentinc/cp-schema-registry:7.3.0
-    hostname: schema-registry
-    container_name: schema-registry
-    depends_on:
-      - zookeeper
-      - kafka
+      KAFKA_BROKERS: "kafka:9092"
+    hostname: clickhouse-server
+    container_name: clickhouse-server
     ports:
-      - "8081:8081"
-    environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "kafka:9092"
-      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+      - "8123:8123" # HTTP interface
+      - "9000:9000" # Native protocol
+      - "9009:9009" # Interserver communication
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.d/custom.xml
+
     networks:
       - flight-network
 
-  # REST Proxy (optional)
-  rest-proxy:
-    image: confluentinc/cp-kafka-rest:7.3.0
-    hostname: rest-proxy
-    container_name: rest-proxy
-    depends_on:
-      - kafka
-      - schema-registry
-    ports:
-      - "8082:8082"
-    environment:
-      KAFKA_REST_HOST_NAME: rest-proxy
-      KAFKA_REST_BOOTSTRAP_SERVERS: "kafka:9092"
-      KAFKA_REST_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
-      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
-    networks:
-      - flight-network
 
 volumes:
   postgres-db-volume:

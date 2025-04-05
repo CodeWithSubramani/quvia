@@ -11,7 +11,7 @@ schema:
 start:
 	make setup
 	make schema
-	#python3 dags/flight_data_ingest/producer.py
+	python3 producer.py
 
 restart:
 	make stop
