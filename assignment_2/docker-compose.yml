@@ -57,79 +57,88 @@ services:
     networks:
       - flight-network
 
-  # Airflow Scheduler
-  airflow-scheduler:
-    image: apache/airflow:2.6.1
-    restart: always
-    depends_on:
-      - airflow-webserver
-      - kafka
-      - clickhouse-server
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__DATABASE__LOAD_DEFAULT_CONNECTIONS=False
-      - PYTHONPATH=/opt/airflow/dags
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-    user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
-    command: bash -c "airflow db init && airflow scheduler"
-    networks:
-      - flight-network
-
-  # Airflow Webserver
-  airflow-webserver:
-    image: apache/airflow:2.6.1
-    restart: always
-    depends_on:
-      - postgres
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__DATABASE__LOAD_DEFAULT_CONNECTIONS=False
-      - PYTHONPATH=/opt/airflow/dags
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./plugins:/opt/airflow/plugins
-    ports:
-      - "8080:8080"
-    user: "50000:0"
-    command: bash -c "airflow db init && airflow webserver"
-    networks:
-      - flight-network
-  # Airflow Postgres
   postgres:
     image: postgres:13
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     networks:
       - flight-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+  # Airflow Initialization
   airflow-init:
-    image: apache/airflow:2.6.1
+    image: apache/airflow:2.6.1-python3.8
     depends_on:
-      - postgres
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
     entrypoint: >
       /bin/bash -c "
+      pip install --no-cache-dir -r /requirements.txt &&
       airflow db init &&
-      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
+      airflow users create --username ${AIRFLOW_USERNAME} --password ${AIRFLOW_PASSWORD}
+      --firstname ${AIRFLOW_FIRSTNAME} --lastname ${AIRFLOW_LASTNAME}
+      --role Admin --email ${AIRFLOW_EMAIL}
       "
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
+      - ./requirements.txt:/requirements.txt
     networks:
       - flight-network
+
+  # Airflow Webserver
+  airflow-webserver:
+    image: apache/airflow:2.6.1-python3.8
+    restart: always
+    depends_on:
+      - postgres
+      - airflow-init
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./requirements.txt:/requirements.txt
+    ports:
+      - "${AIRFLOW_WEBSERVER_PORT}:8080"
+    user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
+    command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow webserver"
+    networks:
+      - flight-network
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    image: apache/airflow:2.6.1-python3.8
+    restart: always
+    depends_on:
+      - airflow-webserver
+      - airflow-init
+    env_file:
+      - .env
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./requirements.txt:/requirements.txt
+    user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
+    command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow scheduler"
+    networks:
+      - flight-network
+
 
   # Kafka Connect (optional, for connecting to external data sources)
   kafka-connect:
