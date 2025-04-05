@@ -6,8 +6,8 @@ from typing import Dict, Any, Optional
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from starlette.responses import StreamingResponse
 
 app = FastAPI()
 
@@ -66,9 +66,9 @@ def generate_random_flight_data() -> Dict[str, Any]:
 
 async def flight_data_generator():
     while True:
-        flight_data = generate_random_flight_data()
-        yield f"data: {flight_data}\n\n"
-        await asyncio.sleep(0.01)  # Wait 1 second before sending the next data
+        flights = [generate_random_flight_data() for _ in range(5)]  # Generate a list of 5 flights
+        yield f"{flights}"
+        await asyncio.sleep(1)  # Wait 1 second before sending the next data
 
 
 @app.get("/flights/stream")
