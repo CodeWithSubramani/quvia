@@ -1,0 +1,6 @@
+requests
+dotenv
+confluent-kafka
+confluent-kafka[avro]
+pytest
+clickhouse_connect
