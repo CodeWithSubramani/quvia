@@ -187,9 +187,10 @@ services:
 
   # ClickHouse Server
   clickhouse-server:
-    image: clickhouse/clickhouse-server:23.3
+    image: clickhouse/clickhouse-server:24.12
     environment:
       KAFKA_BROKERS: "kafka:9092"
+      CLICKHOUSE_PASSWORD: "admin"
     hostname: clickhouse-server
     container_name: clickhouse-server
     ports:

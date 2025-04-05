@@ -12,6 +12,6 @@ def get_query(file_name: str):
 
 def execute_file(file_name: str):
     query = get_query(file_name)
-    client = clickhouse_connect.get_client(host='localhost', port=8123, user='default')
+    client = clickhouse_connect.get_client(host='localhost', port=8123, user='default', password="admin")
     res = client.command(query)
     return res
