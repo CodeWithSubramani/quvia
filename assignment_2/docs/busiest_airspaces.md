@@ -28,15 +28,3 @@ To optimize for the above query, did the following:
 ```shell
 ENGINE = AggregatingMergeTree()
 ```
-
-3. Using `Adaptive Partitioning`
-   For the current 2 days it's partitioned by the hour, and for previous one's its done by the day
-
-```
-PARTITION BY (
-    CASE 
-        WHEN date >= today() - 1 THEN toStartOfHour(timestamp)
-        ELSE toDate(timestamp)
-    END
-)
-```

@@ -23,11 +23,6 @@ CREATE TABLE IF NOT EXISTS flight_data.flight_positions
     lat_grid_materialized Float64 MATERIALIZED floor(latitude/0.5)*0.5
 )
 ENGINE = AggregatingMergeTree()-- Plan is to run frequent aggregations on this in real time
-PARTITION BY (
-    CASE
-        WHEN date >= today() - 7 THEN toStartOfHour(timestamp)
-        ELSE toDate(timestamp)
-    END
-)
+PARTITION BY toStartOfHour(timestamp)
 ORDER BY (flight_id, timestamp)
 SETTINGS index_granularity = 8192;
