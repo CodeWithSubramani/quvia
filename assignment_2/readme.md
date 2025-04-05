@@ -38,7 +38,7 @@ LIMIT 10;
 -- Latest position for a specific flight by callsign
 SELECT *
 FROM flight_data.flight_positions
-WHERE callsign = 'AAR501'
+WHERE callsign = 'FDB892'
 ORDER BY timestamp DESC
 LIMIT 1;
 
@@ -49,7 +49,7 @@ SELECT
     latitude,
     altitude
 FROM flight_data.flight_positions
-WHERE flight_id = '39c13279'
+WHERE callsign = 'FDB892'
 ORDER BY timestamp;
 
 -- Current flights in a specific area (real-time bounding box)

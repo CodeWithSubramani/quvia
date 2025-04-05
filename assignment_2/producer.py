@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import random
-import string
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
@@ -70,14 +69,13 @@ def generate_random_hex() -> str:
 
 
 def generate_random_callsign() -> str:
-    airline = random.choice(['THY', 'KLM', 'BAW', 'SAS', 'RYR', 'AAR', 'MEA', 'SEH', 'HYS', 'FDB'])
-    numbers = ''.join(random.choices('0123456789', k=random.randint(2, 3)))
-    letters = ''.join(random.choices(string.ascii_uppercase, k=random.randint(1, 3)))
-    return f"{airline}{numbers}{letters}"
+    airline = random.choice(
+        ['THY892', 'KLM892', 'BAW892', 'SAS892', 'RYR892', 'AAR892', 'MEA892', 'SEH892', 'HYS892', 'FDB892'])
+    return f"{airline}"
 
 
 def generate_random_flight_data() -> Dict[str, Any]:
-    now = datetime.utcnow()
+    now = datetime.now() + timedelta(hours=5, minutes=30)
     has_hex = random.random() > 0.1  # 90% chance to have hex
     has_callsign = random.random() > 0.1  # 90% chance to have callsign
 

@@ -68,7 +68,7 @@ async def flight_data_generator():
     while True:
         flights = [generate_random_flight_data() for _ in range(5)]  # Generate a list of 5 flights
         yield f"{flights}"
-        await asyncio.sleep(1)  # Wait 1 second before sending the next data
+        await asyncio.sleep(1)
 
 
 @app.get("/flights/stream")
