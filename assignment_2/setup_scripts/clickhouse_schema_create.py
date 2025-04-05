@@ -1,4 +1,4 @@
-from clickhouse_client import execute_file
+from methods.clickhouse_client import execute_file
 
 execute_file('1_create_database.sql')
 execute_file('1_kafka_flight_positions.sql')

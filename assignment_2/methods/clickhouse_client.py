@@ -4,7 +4,7 @@ import clickhouse_connect
 
 
 def get_query(file_name: str):
-    root_path = os.path.dirname(os.path.abspath(__file__))
+    root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(os.path.join(root_path, 'clickhouse_queries', file_name), 'r') as f:
         query = f.read()
     return query

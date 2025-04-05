@@ -1,3 +1,5 @@
+export PYTHONPATH=$(PWD)
+
 stop:
 	docker compose down -v
 setup:
@@ -9,4 +11,4 @@ schema:
 start:
 	make setup
 	make schema
-	python3 producer.py
+	python3 dags/flight_data_ingest/producer.py
