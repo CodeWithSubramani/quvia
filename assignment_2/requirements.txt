@@ -4,3 +4,6 @@ confluent-kafka==2.9.0
 confluent-kafka[avro]==2.9.0
 pytest==8.3.5
 clickhouse_connect==0.8.16
+uvicorn==0.34.0
+fastapi==0.115.12
+pydantic==2.11.2
