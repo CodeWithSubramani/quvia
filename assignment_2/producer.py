@@ -28,17 +28,17 @@ avro_schema = {
     "namespace": "com.flight.analytics",
     "fields": [
         {"name": "flight_id", "type": "string"},
+        {"name": "hex", "type": ["null", "string"], "default": None},
         {"name": "callsign", "type": ["null", "string"], "default": None},
         {"name": "latitude", "type": "double"},
         {"name": "longitude", "type": "double"},
+        {"name": "track", "type": "float"},
         {"name": "altitude", "type": "float"},
-        {"name": "speed", "type": "float"},
-        {"name": "heading", "type": "float"},
-        {"name": "vertical_rate", "type": ["null", "float"], "default": None},
+        {"name": "gspeed", "type": "float"},
+        {"name": "vspeed", "type": "float"},
+        {"name": "squawk", "type": ["null", "string"], "default": None},
         {"name": "timestamp", "type": "long"},
-        {"name": "origin", "type": ["null", "string"], "default": None},
-        {"name": "destination", "type": ["null", "string"], "default": None},
-        {"name": "squawk", "type": ["null", "string"], "default": None}
+        {"name": "source", "type": ["null", "string"], "default": None}
     ]
 }
 
