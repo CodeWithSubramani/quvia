@@ -17,9 +17,17 @@ CREATE TABLE IF NOT EXISTS flight_data.flight_positions
     -- Generated columns for optimization
     date Date DEFAULT toDate(timestamp),
     hour UInt8 DEFAULT toHour(timestamp),
-    geo_point Point DEFAULT (longitude, latitude)
+    geo_point Point DEFAULT (longitude, latitude),
+    -- Materialized columns created
+    lon_grid_materialized Float64 MATERIALIZED floor(longitude/0.5)*0.5,
+    lat_grid_materialized Float64 MATERIALIZED floor(latitude/0.5)*0.5
 )
-ENGINE = ReplacingMergeTree()
-PARTITION BY toYYYYMM(date)
+ENGINE = AggregatingMergeTree()-- Plan is to run frequent aggregations on this in real time
+PARTITION BY (
+    CASE
+        WHEN date >= today() - 7 THEN toStartOfHour(timestamp)
+        ELSE toDate(timestamp)
+    END
+)
 ORDER BY (flight_id, timestamp)
 SETTINGS index_granularity = 8192;
