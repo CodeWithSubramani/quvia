@@ -134,6 +134,7 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./requirements.txt:/requirements.txt
+      - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
       - flight-network
@@ -155,10 +156,10 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./requirements.txt:/requirements.txt
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "${AIRFLOW_WEBSERVER_PORT}:8080"
     user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
-
     command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow webserver"
     networks:
       - flight-network
@@ -166,7 +167,6 @@ services:
   # Airflow Scheduler
   airflow-scheduler:
     image: apache/airflow:2.6.1-python3.9
-
     restart: always
     depends_on:
       - airflow-webserver
@@ -181,6 +181,7 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./requirements.txt:/requirements.txt
+      - /var/run/docker.sock:/var/run/docker.sock
     user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
 
     command: bash -c "pip install --no-cache-dir -r /requirements.txt && airflow scheduler"
@@ -212,14 +213,26 @@ services:
 
   flight-mock-service:
     build:
-      #      context: ./mocker_flight_service.py
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-mock
     container_name: mocker-flight-service
     ports:
       - "8000:8000"
     networks:
       - flight-network
     restart: unless-stopped
+
+  flight-producer:
+    build:
+      dockerfile: Dockerfile-producer
+    restart: always
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+    networks:
+      - flight-network
 
 
 volumes:
