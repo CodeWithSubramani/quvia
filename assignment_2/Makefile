@@ -11,7 +11,8 @@ schema:
 start:
 	make setup
 	make schema
-	python3 producer.py
+	#python3 mocker_flight_service.py
+	#python3 producer_to_kafka.py
 
 restart:
 	make stop

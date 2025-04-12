@@ -112,3 +112,8 @@ ORDER BY month;
 
 
 ```
+
+python3 dags/flight_data_ingest/producer.py
+
+curl http://schema-registry:8081
+curl kafka:29092

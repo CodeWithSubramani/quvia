@@ -12,12 +12,8 @@ from dotenv import load_dotenv
 
 # Load env
 load_dotenv()
-KAFKA_BROKER = os.getenv('KAFKA_BROKER', "kafka:9092")
-producer_conf = {'bootstrap.servers': KAFKA_BROKER, 'log_level': 7, 'acks': 'all',
-                 'retries': 3, }
-producer = Producer(producer_conf)
-
-SCHEMA_REGISTRY_URL = os.getenv('SCHEMA_REGISTRY_URL', "http://schema-registry:8081")
+KAFKA_BROKER = os.getenv('KAFKA_BROKER', "localhost:29092")
+SCHEMA_REGISTRY_URL = os.getenv('SCHEMA_REGISTRY_URL', "http://localhost:8081")
 TOPIC_NAME = "flight_positions"
 
 # Schema
@@ -49,9 +45,9 @@ schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 # Serializer
 avro_serializer = AvroSerializer(schema_registry_client, avro_schema_str, lambda o, c: o)
 
-
-def kafka_error_cb(err):
-    print(f"Kafka error: {err}")
+# Kafka producer
+producer_conf = {'bootstrap.servers': KAFKA_BROKER}
+producer = Producer(producer_conf)
 
 
 def delivery_report(err, msg):
@@ -62,7 +58,6 @@ def delivery_report(err, msg):
 
 
 def transform(data):
-    print(data)
     try:
         # Check if the timestamp is a string and convert it to an integer
         if isinstance(data["timestamp"], str):
@@ -88,27 +83,21 @@ def produce(data):
             for item in data:  # Process each item in the list
                 transformed = transform(item)
                 serialized = avro_serializer(transformed, SerializationContext(TOPIC_NAME, MessageField.VALUE))
-                print('server event serialized:', serialized)
                 producer.produce(TOPIC_NAME, value=serialized, callback=delivery_report)
         elif isinstance(data, dict):  # If it's a single dictionary, process it directly
             transformed = transform(data)
             serialized = avro_serializer(transformed, SerializationContext(TOPIC_NAME, MessageField.VALUE))
-            print('server event serialized:', serialized)
             producer.produce(TOPIC_NAME, value=serialized, callback=delivery_report)
-
         else:
             print(f"❌ Unexpected data format: {data}")
-
-        # Increase polling timeout for better processing
-        producer.poll(1)  # Make sure we allow more time for delivery reports
-        producer.flush()  # Forcefully flush the producer to ensure delivery
+        producer.poll(0)
     except Exception as e:
         print(f"Error producing message: {e}")
 
 
 def main():
     print("Connecting to SSE stream...")
-    response = requests.get("http://flight-mock-service:8000/stream", stream=True)
+    response = requests.get("http://localhost:8000/stream", stream=True)
     client = sseclient.SSEClient(response)
 
     for event in client.events():
