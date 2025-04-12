@@ -2,7 +2,6 @@ import subprocess
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.email import EmailOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.email import send_email
 
@@ -42,16 +41,16 @@ with DAG(
         schedule_interval='*/1 * * * *',  # Run every 2 minutes
         catchup=False
 ) as dag:
-    notify_start = EmailOperator(
-        task_id='notify_dag_start',
-        to='subramani0595@gmail.com',  # Replace with your email
-        subject='Flight Producer DAG Started',
-        html_content='The Flight Producer DAG has started.'
-    )
+    # notify_start = EmailOperator(
+    #     task_id='notify_dag_start',
+    #     to='subramani0595@gmail.com',  # Replace with your email
+    #     subject='Flight Producer DAG Started',
+    #     html_content='The Flight Producer DAG has started.'
+    # )
 
     monitor_task = PythonOperator(
         task_id='check_and_restart_flight_producer',
         python_callable=check_and_restart
     )
-
+# notify_start >> monitor_task
 monitor_task
