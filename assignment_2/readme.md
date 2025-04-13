@@ -243,6 +243,10 @@ GROUP BY month
 ORDER BY month;
 ```
 
+# High level dashboard:
+
+![img_1.png](img_1.png)
+
 # Scope for improvements
 
 1. Better use of materialized views in clickhouse to feed into more analytical queries
