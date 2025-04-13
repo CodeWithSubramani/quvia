@@ -22,5 +22,5 @@ CREATE TABLE IF NOT EXISTS flight_data.flight_positions
 )
 ENGINE = AggregatingMergeTree()-- Plan is to run frequent aggregations on this in real time
 PARTITION BY toStartOfHour(timestamp) -- could be set to day, but hourly/minute for close realtime tracking
-ORDER BY (flight_id, timestamp)
+ORDER BY (timestamp,flight_id) -- order by timestamp for fast range queries)
 SETTINGS index_granularity = 8192;
