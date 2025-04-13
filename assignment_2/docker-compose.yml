@@ -234,10 +234,57 @@ services:
     networks:
       - flight-network
 
+  nifi:
+    image: apache/nifi:1.19.1
+    container_name: nifi
+    hostname: nifi
+    ports:
+      - "8089:8080"
+      - "8181:8181"
+      - "8443:8443"
+      - "10000:10000"
+    environment:
+      - NIFI_WEB_HTTP_PORT=8080
+      - NIFI_WEB_HTTPS_PORT=8443
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=admin_password
+    volumes:
+      - type: volume
+        source: conf
+        target: /opt/nifi/current/conf
+      - type: volume
+        source: content
+        target: /opt/nifi/current/content_repository
+      - type: volume
+        source: db
+        target: /opt/nifi/current/database_repository
+      - type: volume
+        source: flowfile
+        target: /opt/nifi/current/flowfile_repository
+      - type: volume
+        source: provenance
+        target: /opt/nifi/current/provenance_repository
+      - type: volume
+        source: logs
+        target: /opt/nifi/current/logs
+      - type: volume
+        source: data
+        target: /opt/nifi/current/data
+    networks:
+      - flight-network
+    restart: always
+
 
 volumes:
   postgres-db-volume:
   clickhouse_data:
+  conf:
+  content:
+  db:
+  flowfile:
+  provenance:
+  logs:
+  data:
 
 networks:
   flight-network:
