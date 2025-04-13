@@ -1,7 +1,7 @@
 import asyncio
 import json
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, Optional
 
 import uvicorn
@@ -37,16 +37,27 @@ def generate_random_callsign() -> str:
     return f"{airline}"
 
 
+flight_positions = {}
+
+
 def generate_random_flight_data() -> Dict[str, Any]:
     now = datetime.utcnow()
-    has_hex = random.random() > 0.1  # 90% chance to have hex
-    has_callsign = random.random() > 0.1  # 90% chance to have callsign
+    has_hex = random.random() > 0.1
+    has_callsign = random.random() > 0.1
 
-    lat = random.uniform(45.0, 50.0)
-    lon = random.uniform(14.0, 22.0)
+    fr24_id = ''.join(random.choices('0123456789abcdef', k=8))
+    if fr24_id not in flight_positions:
+        lat = random.uniform(45.0, 50.0)
+        lon = random.uniform(14.0, 22.0)
+        flight_positions[fr24_id] = (lat, lon)
+    else:
+        lat, lon = flight_positions[fr24_id]
+        lat += random.uniform(0.001, 0.01)
+        lon += random.uniform(0.001, 0.01)
+        flight_positions[fr24_id] = (lat, lon)
 
     flight = {
-        "fr24_id": ''.join(random.choices('0123456789abcdef', k=8)),
+        "fr24_id": fr24_id,
         "hex": generate_random_hex() if has_hex else None,
         "callsign": generate_random_callsign() if has_callsign else None,
         "lat": round(lat, 5),
@@ -56,7 +67,7 @@ def generate_random_flight_data() -> Dict[str, Any]:
         "gspeed": random.randint(260, 500),
         "vspeed": random.choice([-64, -32, 0, 32, 64]),
         "squawk": ''.join(random.choices('01234567', k=4)),
-        "timestamp": (now - timedelta(seconds=random.randint(0, 60))).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": random.choice(["ADSB", "MLAT"])
     }
 

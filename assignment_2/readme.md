@@ -1,15 +1,15 @@
-airflow creds
+Prequisites:
 
 Airflow Credentials
 
-```shell
+```
 admin
 admin
 ```
 
 clickhouse creds
 
-```shell
+```
 default
 admin
 ```
