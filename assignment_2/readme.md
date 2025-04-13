@@ -228,6 +228,10 @@ LIMIT 100;
 ```
 
 - Seasonal flight pattern changes (monthly comparison)
+- For this Ideally i will load the data into another table with partitioning as monthly and then run the below query
+- And the same view which is optimized for real-time query need not be used to run this query.
+- I will have a airflow job which takes data from the real-time table and loads it into the monthly
+  partitioned table, and remove the partitions from the real-time table.
 
 ```sql
 SELECT 
@@ -248,3 +252,6 @@ ORDER BY month;
     - This has to be done at the ingester level. That service needs to be more robust and should be able to handle
       failures with a backend stateful system to keep track of the offsets.
     - Or Explore Nifi if the above can be made possible
+3. The source data in the bronze layer, I am loading into kafka, but i might want to load the backup data somewhere,
+   if the retention period is over in kafka.
+4. Basically a lot of optimizations can be done in terms of Disaster recovery, HA, and scaling.
