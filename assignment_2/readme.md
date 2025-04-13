@@ -259,3 +259,4 @@ ORDER BY month;
 3. The source data in the bronze layer, I am loading into kafka, but i might want to load the backup data somewhere,
    if the retention period is over in kafka.
 4. Basically a lot of optimizations can be done in terms of Disaster recovery, HA, and scaling.
+5. I wanted to put graphana/evidence.dev into this repo as IAAC but I ran out of time.
